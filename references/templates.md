@@ -13,8 +13,6 @@ python3 scripts/layout.py work/input.json outputs/collage.png --layout-out work/
   "mode": "solid-type",
   "size": [1080,1440],
   "font": "/absolute/path/to/font.ttf",
-  "background_color": "#543c28",
-  "ink": "#f4d78f",
   "title": "(a pause)",
   "intro": "a collection of",
   "images": [
@@ -26,6 +24,7 @@ python3 scripts/layout.py work/input.json outputs/collage.png --layout-out work/
 
 例子里的框只是格式示范，必须根据实际原图填写。主体框自带约 8% 扩展，代码尝试满足 `ratio`，无法同时保全主体时改用保护区域的实际比例，并在网格槽中居中。不会做二次中心 cover。
 
+- `background_color` / `ink`：默认省略，自动从各照片等权提取色彩，优先有代表性的有彩色，生成低饱和深色底及同色相浅色文字。无明显色彩时用中性底；自动文字对比度至少4.5:1。明确传值可覆盖；显式文字色由执行者确认可读。
 - `mode`：可省略，默认且仅支持 `solid-type`。不支持随机模式或照片底。
 - `region`：归一化 `[x,y,width,height]`，默认 `[.09,.17,.82,.47]`。词图群在此区域内对齐。
 - `columns`：1 或 2，默认 2；竖幅主体需要更大空间时减少列数或扩大区域。
