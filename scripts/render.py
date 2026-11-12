@@ -14,7 +14,7 @@ def render(spec, destination, root):
     w, h = spec.get('size', [1080, 1440])
     if min(w, h) < 1:
         raise ValueError('Invalid canvas size')
-    canvas = Image.new('RGB', (w, h), spec.get('background', {}).get('color', '#543c28'))
+    canvas = Image.new('RGB', (w, h), spec.get('background', {}).get('color', '#353535'))
     draw = ImageDraw.Draw(canvas)
 
     def resolve(value):

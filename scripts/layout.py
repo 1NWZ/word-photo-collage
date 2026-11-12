@@ -3,6 +3,7 @@
 import argparse
 import json
 import math
+import colorsys
 from pathlib import Path
 from PIL import Image, ImageOps, ImageFont
 from render import render, MODES
@@ -27,6 +28,53 @@ def protected_crop(size, protect, ratio, margin=.08):
     return [a/w,b/h,c/w,d/h], (c-a)/(d-b)
 
 
+def photo_palette(sources):
+    """Equal weight per photo; prefer recurrent chromatic colors over black borders."""
+    candidates=[]
+    for item in sources:
+        with Image.open(item['path']) as source:
+            im=ImageOps.exif_transpose(source).convert('RGB')
+            im.thumbnail((96,96))
+            quant=im.quantize(colors=8)
+            palette=quant.getpalette()
+            for count,index in quant.getcolors():
+                rgb=tuple(v/255 for v in palette[index*3:index*3+3])
+                hue,light,sat=colorsys.rgb_to_hls(*rgb)
+                candidates.append((count/(im.width*im.height),hue,light,sat,rgb))
+    colored=[c for c in candidates if c[3]>.18 and .08<c[2]<.88]
+    if colored:
+        bins={}
+        for c in colored:
+            key=int(c[1]*12)%12
+            bins.setdefault(key,[]).append(c)
+        group=max(bins.values(),key=lambda cs:sum(c[0]*(.25+c[3]) for c in cs))
+        chosen=max(group,key=lambda c:c[0]*(.25+c[3]))
+        hue,sat=chosen[1],max(.20,min(.42,chosen[3]*.6))
+        bg=colorsys.hls_to_rgb(hue,.23,sat)
+        ink=colorsys.hls_to_rgb(hue,.93,.28)
+    else:
+        total=sum(c[0] for c in candidates)
+        avg=[sum(c[0]*c[4][i] for c in candidates)/total for i in range(3)]
+        hue,light,sat=colorsys.rgb_to_hls(*avg)
+        bg=colorsys.hls_to_rgb(hue,.23,min(sat,.12))
+        ink=(.95,.95,.93)
+    def hexcolor(rgb):return '#' + ''.join('%02x'%round(v*255) for v in rgb)
+    return hexcolor(bg),hexcolor(ink)
+
+
+def readable_ink(background, preferred):
+    from PIL import ImageColor
+    def lum(color):
+        rgb=[v/255 for v in ImageColor.getrgb(color)]
+        rgb=[v/12.92 if v<=.04045 else ((v+.055)/1.055)**2.4 for v in rgb]
+        return sum(v*k for v,k in zip(rgb,(.2126,.7152,.0722)))
+    def contrast(a,b):
+        x,y=sorted((lum(a),lum(b)))
+        return (y+.05)/(x+.05)
+    if contrast(background,preferred)>=4.5:return preferred
+    return max(('#faf8f2','#191919'),key=lambda c:contrast(background,c))
+
+
 def build(config, root):
     w,h = config.get('size',[1080,1440])
     if min(w,h)<360: raise ValueError('Use a canvas at least 360px on each side')
@@ -46,7 +94,10 @@ def build(config, root):
         with Image.open(item['path']) as im: item['source_size']=ImageOps.exif_transpose(im).size
         if 'protect' not in item: raise ValueError('Each image requires a visually chosen protect box')
         sources.append(item)
-    out={'mode':mode,'size':[w,h],'font':font,'ink':config.get('ink','#f4d78f'),'elements':[]}
+    sampled_bg,sampled_ink=photo_palette(sources)
+    background=config.get('background_color',sampled_bg)
+    ink=config.get('ink',readable_ink(background,sampled_ink))
+    out={'mode':mode,'size':[w,h],'font':font,'ink':ink,'elements':[]}
     elements=out['elements']
     def text(value,x,y,size,maxwidth,anchor='mm'):
         size=max(1,round(size))
@@ -58,7 +109,7 @@ def build(config, root):
         elements.append({'type':'text','text':value,'xy':[round(x),round(y)],'size':size,'anchor':anchor,'max_width':round(maxwidth)+2})
     if 'background_index' in config or 'shade' in config:
         raise ValueError('Photo backgrounds are no longer supported; use background_color')
-    out['background']={'color':config.get('background_color','#543c28')}
+    out['background']={'color':background}
     default=[.09,.17,.82,.47]
     region=config.get('region',default)
     rx,ry,rw,rh=region
