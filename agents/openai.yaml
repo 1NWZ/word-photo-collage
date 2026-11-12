@@ -1,4 +1,4 @@
 interface:
-  display_name: "词图拼贴"
-  short_description: "将多张照片随机编排成照片底饱满、照片底聚集或纯色文字拼贴，输出一张完整图片"
-  default_prompt: "用 $word-photo-collage 将我上传的多张照片做成一张图文拼贴，随机选择三种排版之一。"
+  display_name: "纯色词图拼贴"
+  short_description: "将多张照片做成纯色底文字拼贴，交织大小短词、矩形照片、小编号和少量手绘"
+  default_prompt: "用 $word-photo-collage 将我上传的照片做成一张参考图4风格的纯色底图文拼贴。"
