@@ -4,7 +4,7 @@
 
 ## 使用
 
-将目录放入 `~/.codex/skills/word-photo-collage/`，上传至少两张照片，输入：
+将目录放入 `~/.codex/skills/word-photo-collage/`，支持多张照片输入（2 张起，非仅限 2 张），排版随图数调整。上传照片后输入：
 
 > 用 $word-photo-collage 做一张纯色底图文拼贴。
 
