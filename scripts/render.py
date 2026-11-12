@@ -2,14 +2,15 @@
 """Pixel-preserving composition. Layout and semantic subject boxes are agent-authored."""
 import argparse
 import json
-import random
 from pathlib import Path
 
-MODES = ('photo-full', 'photo-cluster', 'solid-type')
+MODES = ('solid-type',)
 
 
 def render(spec, destination, root):
     from PIL import Image, ImageDraw, ImageFont, ImageOps
+    if spec.get('mode', 'solid-type') not in MODES or spec.get('background', {}).get('path'):
+        raise ValueError('Only solid-type with a solid color background is supported')
     w, h = spec.get('size', [1080, 1440])
     if min(w, h) < 1:
         raise ValueError('Invalid canvas size')
@@ -41,16 +42,6 @@ def render(spec, destination, root):
         if abs((cropped.width/cropped.height)/(size[0]/size[1])-1) > .035:
             raise ValueError('crop aspect must match destination aspect within 3.5%; adjust crop or box')
         return cropped.resize(size, Image.Resampling.LANCZOS)
-
-    bg = spec.get('background', {})
-    if bg.get('path'):
-        canvas.paste(photo(bg, (w, h)), (0, 0))
-        shade = bg.get('shade', 0)
-        if not 0 <= shade <= .3:
-            raise ValueError('background shade must be 0..0.3')
-        if shade:
-            canvas = Image.blend(canvas, Image.new('RGB', (w, h), 'black'), shade)
-            draw = ImageDraw.Draw(canvas)
 
     def inside(box):
         x0, y0, x1, y1 = box
@@ -95,17 +86,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('spec', nargs='?', type=Path)
     parser.add_argument('output', nargs='?', type=Path)
-    parser.add_argument('--choose-mode', action='store_true')
-    parser.add_argument('--seed', type=int)
     args = parser.parse_args()
-    if args.choose_mode:
-        print(random.Random(args.seed).choice(MODES))
-        return
     if not args.spec or not args.output:
-        parser.error('Provide spec.json output.png, or --choose-mode')
+        parser.error('Provide spec.json output.png')
     with args.spec.open(encoding='utf-8') as f:
         spec = json.load(f)
-    if spec.get('mode') not in MODES:
+    if spec.get('mode', 'solid-type') not in MODES:
         parser.error('spec.mode must be one of ' + ', '.join(MODES))
     render(spec, args.output, args.spec.resolve().parent)
     print(str(args.output.resolve()))
