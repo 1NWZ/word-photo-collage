@@ -51,15 +51,27 @@ def photo_palette(sources):
         chosen=max(group,key=lambda c:c[0]*(.25+c[3]))
         hue,sat=chosen[1],max(.20,min(.42,chosen[3]*.6))
         bg=colorsys.hls_to_rgb(hue,.23,sat)
-        ink=colorsys.hls_to_rgb(hue,.93,.28)
     else:
         total=sum(c[0] for c in candidates)
         avg=[sum(c[0]*c[4][i] for c in candidates)/total for i in range(3)]
         hue,light,sat=colorsys.rgb_to_hls(*avg)
-        bg=colorsys.hls_to_rgb(hue,.23,min(sat,.12))
-        ink=(.95,.95,.93)
+        bg=colorsys.hls_to_rgb(hue,.08 if light<.25 else .23,min(sat,.12))
     def hexcolor(rgb):return '#' + ''.join('%02x'%round(v*255) for v in rgb)
-    return hexcolor(bg),hexcolor(ink)
+    background=hexcolor(bg)
+    return background,designer_ink(background)
+
+
+def designer_ink(background):
+    """Curated pairings, selected by the backdrop hue rather than pale same-hue ink."""
+    from PIL import ImageColor
+    hue,light,sat=colorsys.rgb_to_hls(*(v/255 for v in ImageColor.getrgb(background)))
+    if sat<.15:
+        return '#c5f47b' if light<.18 else '#ffffff'  # black / lime; neutral / white
+    if .48<=hue<.73:return '#f5bfd7'  # blue / soft pink
+    if .04<=hue<.19:return '#f6dc85'  # brown / butter yellow
+    if .19<=hue<.48:return '#f4c9d8'  # green / blush pink
+    if .73<=hue<.91:return '#f4e6a4'  # purple / pale yellow
+    return '#ffffff'  # ambiguous warm hues: white
 
 
 def readable_ink(background, preferred):
@@ -72,7 +84,9 @@ def readable_ink(background, preferred):
         x,y=sorted((lum(a),lum(b)))
         return (y+.05)/(x+.05)
     if contrast(background,preferred)>=4.5:return preferred
-    return max(('#faf8f2','#191919'),key=lambda c:contrast(background,c))
+    if contrast(background,'#ffffff')>=4.5:return '#ffffff'
+    # Only explicitly supplied light backgrounds need the dark readability fallback.
+    return '#191919'
 
 
 def build(config, root):
@@ -96,7 +110,7 @@ def build(config, root):
         sources.append(item)
     sampled_bg,sampled_ink=photo_palette(sources)
     background=config.get('background_color',sampled_bg)
-    ink=config.get('ink',readable_ink(background,sampled_ink))
+    ink=config.get('ink',readable_ink(background,designer_ink(background)))
     out={'mode':mode,'size':[w,h],'font':font,'ink':ink,'elements':[]}
     elements=out['elements']
     def text(value,x,y,size,maxwidth,anchor='mm'):
