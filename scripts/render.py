@@ -27,6 +27,12 @@ def render(spec, destination, root):
         x0, y0, x1, y1 = crop
         if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
             raise ValueError('crop must be normalized [left, top, right, bottom]')
+        if 'protect' in item:
+            a, b, c, d = item['protect']
+            if not (0 <= a < c <= 1 and 0 <= b < d <= 1):
+                raise ValueError('Invalid subject protection box')
+            if not (x0 <= a+1e-8 and y0 <= b+1e-8 and x1 >= c-1e-8 and y1 >= d-1e-8):
+                raise ValueError('Crop cuts through protected subject; change photo box')
         crop_px = (round(x0*im.width), round(y0*im.height), round(x1*im.width), round(y1*im.height))
         if crop_px[2] <= crop_px[0] or crop_px[3] <= crop_px[1]:
             raise ValueError('crop too small')
