@@ -1,4 +1,4 @@
-# 三种可调整模板
+# 纯色文字拼贴模板
 
 默认用本文件的输入直接生成最终图片，不再逐元素编写 render JSON。依赖已存在时直接运行，出现 `ModuleNotFoundError: PIL` 才安装 Pillow。
 
@@ -13,8 +13,8 @@ python3 scripts/layout.py work/input.json outputs/collage.png --layout-out work/
   "mode": "solid-type",
   "size": [1080,1440],
   "font": "/absolute/path/to/font.ttf",
-  "background_color": "#30382b",
-  "ink": "#eee6c6",
+  "background_color": "#543c28",
+  "ink": "#f4d78f",
   "title": "(a pause)",
   "intro": "a collection of",
   "images": [
@@ -26,16 +26,14 @@ python3 scripts/layout.py work/input.json outputs/collage.png --layout-out work/
 
 例子里的框只是格式示范，必须根据实际原图填写。主体框自带约 8% 扩展，代码尝试满足 `ratio`，无法同时保全主体时改用保护区域的实际比例，并在网格槽中居中。不会做二次中心 cover。
 
-- `mode`：三种模式之一，或 `random`（默认）。可传 `seed` 复现；小修改沿用已返回的模式，不重抽。
-- `background_index`：照片底模式必填，索引从 0 开始；它作为底图，不重复作为前景。先选连续留白最多的原图。
-- `region`：归一化 `[x,y,width,height]`，词图群的可用区域。根据背景避让主体。纯色默认 `[.09,.17,.82,.47]`；饱满默认 `[.09,.15,.82,.68]`；聚集默认 `[.12,.25,.76,.36]`。这些是模板起点，不是忽略背景主体的许可。
-- `columns`：1 或 2。饱满默认 1 列，其他模式默认 2 列；单前景自动 1 列。人像偏竖或数量较多时，扩大 region 或减少列数，保持辨识度。
-- `row_gap` / `column_gap`：以 1080 宽为基准，默认分别 32（饱满40）/32；布局按 8px 节奏对齐。共享列线、行中心线，编号固定在图下。
-- `label_size`：以 1080 宽为基准，默认 44（单列48）。长词自动缩小，低于最小可读字号仍放不下时报错；优先缩短标签。
-- `title` / `intro`：纯色模式使用。title 默认单行；`title_size` 默认 116、上限画布宽 12%；`title_y` 默认 .77（画布高比例）。模板拒绝标题挤到照片或底边。
+- `mode`：可省略，默认且仅支持 `solid-type`。不支持随机模式或照片底。
+- `region`：归一化 `[x,y,width,height]`，默认 `[.09,.17,.82,.47]`。词图群在此区域内对齐。
+- `columns`：1 或 2，默认 2；竖幅主体需要更大空间时减少列数或扩大区域。
+- `row_gap` / `column_gap`：1080 宽基准，均默认 32；按 8px 节奏对齐。
+- `label_size`：默认 44（单列48），过长文案自动缩小；优先缩短短词。
+- `title` / `intro`：大号单行收尾词与顶部小引句。`title_size` 默认116、上限画布宽12%；`title_y` 默认 .77，拒绝挤压照片或底边。
 - `subject_margin`：默认 .08；不要为强行满足照片框而设为负数或缩小 protect。
 - `doodle`：纯色模式默认一颗小线条星，可关。需要其他手绘时在已生成布局里替换该元素，不重算整个版面。
-- `shade`：照片底压暗强度 0–.3，默认0。
 
 `--layout-out` 可省略；需要局部精调时保留它，仅调整相关单元。高级修改格式见 render-spec.md。
 

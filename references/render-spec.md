@@ -1,11 +1,10 @@
 # 渲染规格
 
-默认使用 [三种模板](templates.md)；本文件只用于精调模板输出或用户明确要求自定义排版。
+默认使用 [纯色模板](templates.md)；本文件只用于精调模板输出或用户明确要求自定义排版。
 
-先查看原图、确定模式及坐标，再写 JSON。此脚本是执行器，不自动理解照片，也不会自行安排词图关系。可用 Python + Pillow，缺依赖时在工作目录的虚拟环境中安装 Pillow。
+先查看原图、确定纯色配色及坐标，再写 JSON。此脚本是执行器，不自动理解照片，也不会自行安排词图关系。可用 Python + Pillow，缺依赖时在工作目录的虚拟环境中安装 Pillow。
 
 ```sh
-python3 scripts/render.py --choose-mode
 python3 scripts/render.py work/layout.json outputs/collage.png
 ```
 
@@ -13,21 +12,19 @@ python3 scripts/render.py work/layout.json outputs/collage.png
 
 ```json
 {
-  "mode": "photo-cluster",
-  "size": [1080, 1440],
+  "mode": "solid-type",
+  "size": [1080,1440],
   "font": "/absolute/path/to/font.ttf",
-  "ink": "#ffffff",
-  "background": {"path": "/absolute/path/to/base.jpg", "crop": [0, 0, 1, 1], "shade": 0.04},
+  "ink": "#f4d78f",
+  "background": {"color":"#543c28"},
   "elements": [
-    {"type": "text", "text": "mood", "xy": [300, 720], "size": 48, "max_width": 170},
-    {"type": "text", "text": "(", "xy": [480, 720], "size": 56},
-    {"type": "photo", "path": "/absolute/path/to/detail.jpg", "crop": [0, 0.25, 1, 0.75], "box": [520, 695, 240, 120]},
-    {"type": "text", "text": ")", "xy": [780, 720], "size": 56}
+    {"type":"text","text":"moments","xy":[100,300],"size":48,"max_width":250},
+    {"type":"photo","path":"/absolute/path/to/photo.jpg","crop":[0,0,1,1],"protect":[0,0,1,1],"box":[400,260,240,320]}
   ]
 }
 ```
 
-示例背景假定 3:4 原图；前景假定正方形原图。实际文件尺寸不同必须重算 crop，不可照抄示例框。纯色模式的 background 改为 `{"color":"#543c28"}`。
+示例前景假定3:4原图，实际框比例应按源图调整；完整多图构图使用模板。仅支持纯色背景，不支持背景照片。
 
 - `box` 是输出像素 `[x,y,width,height]`，整数。
 - `crop` 是 EXIF 方向纠正后的原图归一化 `[left,top,right,bottom]`。裁切宽高比必须与目标框匹配，容差 3.5%；脚本拒绝再次居中裁切，防止悄悄截断主体。默认完整原图。
@@ -37,6 +34,6 @@ python3 scripts/render.py work/layout.json outputs/collage.png
 - `line` 元素：`{"type":"line","points":[[850,230],[862,245],[848,260]],"width":3}`。手绘花可用多条略不规则的细线，星用折线；只在纯色模式少量使用。脚本不会自动添加花朵。
 - 元素按数组顺序绘制。需自己检查碰撞和语义配对，脚本仅检查画布边界、裁剪比例和可选文字宽度。
 
-所有源照片都需在 background 或 photo 中出现，脚本不持有输入清单，因此交付前由执行者对照清单检查。不要将已排版的参考图当作原片输入测试后声称完成了用户新图拼贴。
+所有源照片都需在 photo 中出现，脚本不持有输入清单，因此交付前由执行者对照清单检查。不要将已排版的参考图当作原片输入测试后声称完成了用户新图拼贴。
 
-照片元素和照片背景可携带 `protect: [left,top,right,bottom]`。它是归一化主体保护框；渲染器会拒绝不完整包含该框的 crop。模板默认自动传入，手写布局也应填写。
+照片元素应携带 `protect: [left,top,right,bottom]`。它是归一化主体保护框；渲染器会拒绝不完整包含该框的 crop。模板默认自动传入，手写布局也应填写。
