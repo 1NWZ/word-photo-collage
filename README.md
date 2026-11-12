@@ -26,11 +26,10 @@
 
 ```sh
 python3 -m pip install -r requirements.txt
-python3 scripts/render.py --choose-mode
-python3 scripts/render.py layout.json collage.png
+python3 scripts/layout.py input.json collage.png --layout-out layout.json
 ```
 
-脚本根据模型编写的 JSON 执行裁剪、文字排版与合成；它不自动识别主体或生成布局。格式见 [渲染规格](references/render-spec.md)，完整工作流见 [SKILL.md](SKILL.md)。字体使用运行环境中可用的字体文件，不随包分发系统字体。
+模型一次看图后提供主体保护框和短词，三种可调整的代码模板自动安排网格、裁剪与文字；它不自动识别主体。格式见 [模板输入](references/templates.md)，高级精调见 [渲染规格](references/render-spec.md)，完整工作流见 [SKILL.md](SKILL.md)。字体使用运行环境中可用的字体文件，不随包分发系统字体。
 
 已验证三种模式渲染、两图适配、裁剪比例与文字越界拒绝，并使用一组五张照片进行了真实成片检查。自动边界检查不能替代视觉检查。
 
@@ -41,3 +40,5 @@ python3 scripts/render.py layout.json collage.png
 ## 许可证
 
 [MIT](LICENSE)。许可证涵盖本仓库中的代码与文档，不涵盖用户另行提供的照片和字体。
+
+默认生成流程：一次看图、一次模板排版、一次成片检查；仅按所选模式查阅分析，运行缺依赖时再安装，最终直接交付图片。模板保全主体保护框，并限制底部标题，减少截脸、散乱对齐和视觉下坠。
